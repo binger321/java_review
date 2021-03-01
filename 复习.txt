@@ -1,0 +1,73 @@
+arraylist :    基于数组实现，
+               线程不安全，
+               新增适合在数组末端做新增， 若在中间或者首位做新增，数组需要进行复制，
+               删除也是  
+               适合随机访问，即通过下标
+               扩容 50%     newCapacity = oldCapacity + (oldCapacity >> 1);//newCapacity就是1.5倍的oldCapacity
+               最大数组容量
+               private static final int MAX_ARRAY_SIZE = Integer.MAX_VALUE - 8;
+
+               实现 randomAccess接口
+               在集合操作类中 Collections  二分查找 binarySearch 可以采用
+在源码中可以看
+
+
+ArrayList通过for遍历比通过iterator遍历要稍快，LinkedList通过iterator遍历比通过for遍历要快。
+
+
+集合涉及 fast-fail  集合进行 新增，删除时 modCount++
+                   遍历的集合中 对modCount 于集合遍历时开始的 expectedModCount 做比较  若 modCount != expectedModCount  则抛出 ConcurrentModificationException 异常
+
+                   解决： 使用Collections 中的 CopyOnWriteArrayList  ConcurrentHashMap 等 在修改时进行加锁，并且不会进行modCount检查
+
+linkedList   
+          	 peek 查
+
+             queue 队列 push
+                        poll 
+                        
+             stack 栈  push 
+          	           pop
+
+
+Iterator  顺序遍历  查询  删除
+ListIterator  继承了Iterator 且可以双向遍历，next()  previous()  得到对应的位置  nextIndex()/previousIndex()  可以add set  
+
+
+HashMap hash()  取hashCode  进行扰动运算： hashCode 按位 异或 ^  >>16 取高位               取hashCode：Object默认 是根据内存地址经过特定的算法返回一个哈希值
+        取模   h & (lenth - 1)
+在了解如何计算存放数组table中的位置后，下面讲解为什么要这样计算，即主要回答以下3个问题
+1. 为什么不直接采用经过hashCode（）处理的哈希码作为存储数组table的下标位置？
+2. 为什么采用哈希码与运算（&）（数组长度-1）计算数组下标？  数组是2^n  2^n - 1 其实就是取模计算 
+3. 为什么在计算数组下标前，需对哈希码进行二次处理：扰动处理 ？
+在回答这三个问题前，请大家记住一个核心思想：
+所有处理的根本目的，都是为了提高存储key-value的数组下标位置的随机性&分布均匀性，尽量避免出现hash值冲突。即对于不同key，存储位置的数组下标尽量一样
+
+add 方法  得到hash值，判断散列表是否初始化，未初始化进行初始化  数组长度为小于cap最小的2的n次幂
+             查询hash&(length - 1)是否冲突，不冲突 那么在数组下标为hash&(lengh - 1)进行存储
+                                                   冲突  那么判断是否树 treeNode 若是那么插入数据   红黑树，各个叶结点的深度小于2
+                                                                                是树，插入红黑树中
+                                                                                是链表，先插入链表，判断链表长度是否大于8  若大于8  进行树化
+             插入成功判断是否需要扩容，根据当前size 与 cap（最大容量） * 扩容因子(0.75) 进行判断 若size>该阈值 那么进行扩容 * 2 ，数组长度 * 2，并且遍历重新计算各个数组的hash进行，定位下标，建链表，转换为相应数组
+             
+LinkedHashMap  LRU
+ConcurrentHashMap
+
+LinkedBlockingQueue
+入队
+	offer 队列满时返回false
+	put  队列满时阻塞
+	add  抛异常
+
+	poll 队列空时返回null
+	take  队列空时阻塞
+
+线程
+新任务提交  
+      查看线程数 是否小于核心数   
+      是  创建新线程执行任务
+      否  查看等待队列，是否已满
+          未满  插入队列中，等待执行
+          满了  查看线程数 是否小于最大线程数
+                是  那么创建线程，并执行任务  
+                否  拒绝执行
